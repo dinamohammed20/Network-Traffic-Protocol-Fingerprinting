@@ -1,0 +1,45 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 1. توليد بيانات افتراضية تمثل بصمات البروتوكولات (Packet Length, Inter-arrival Time)
+data = {
+    'Packet_Length': np.concatenate([np.random.normal(500, 50, 100),  # HTTP
+                                   np.random.normal(60, 10, 100),   # DNS
+                                   np.random.normal(1200, 100, 100)]), # SSH
+    'Inter_Arrival_Time': np.concatenate([np.random.uniform(0.1, 0.5, 100), 
+                                        np.random.uniform(0.01, 0.05, 100), 
+                                        np.random.uniform(0.05, 0.2, 100)]),
+    'Protocol': ['HTTP']*100 + ['DNS']*100 + ['SSH']*100
+}
+
+df = pd.DataFrame(data)
+
+# 2. تحضير البيانات للتدريب
+X = df[['Packet_Length', 'Inter_Arrival_Time']]
+y = df['Protocol']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# 3. بناء وتدريب النموذج (Random Forest)
+model = RandomForestClassifier(n_estimators=100)
+model.fit(X_train, y_train)
+
+# 4. التنبؤ واستخراج النتائج
+y_pred = model.predict(X_test)
+
+# طباعة تقرير الأداء
+print("Classification Report:\n")
+print(classification_report(y_test, y_pred))
+
+# رسم مصفوفة الارتباك (Confusion Matrix) لتكون ضمن نتائج العرض التقديمي
+plt.figure(figsize=(8,6))
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt='d', xticklabels=model.classes_, yticklabels=model.classes_, cmap='Blues')
+plt.title('Protocol Fingerprinting Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.show()
